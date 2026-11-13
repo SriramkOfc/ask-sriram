@@ -7,6 +7,8 @@ import time
 import requests
 
 GITHUB_USER = "SriramkOfc"
+# Not interesting as "projects": the profile README repo and the website repo (the website is in the knowledge file).
+HIDDEN_REPOS = {"sriramkofc", "sriramkofc.github.io"}
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,255}\.[a-zA-Z]{2,24}$")
 
 _github_cache: dict = {"at": 0.0, "data": None}
@@ -49,7 +51,7 @@ def get_github_projects() -> dict:
                 "url": x["html_url"],
             }
             for x in r.json()
-            if not x.get("fork") and not x.get("private")
+            if not x.get("fork") and not x.get("private") and x["name"].lower() not in HIDDEN_REPOS
         ][:12]
         data = {"profile": f"https://github.com/{GITHUB_USER}", "repositories": repos}
     except requests.RequestException:

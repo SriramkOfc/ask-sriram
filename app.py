@@ -86,6 +86,10 @@ def health():
 
 @api.post("/api/chat")
 def chat(body: ChatIn, request: Request):
+    origin = request.headers.get("origin")
+    if origin and origin not in ALLOWED_ORIGINS:
+        # Browsers on other sites can't use this API. (Rate limits cover non-browser clients.)
+        return JSONResponse({"reply": "This assistant only works on sriramkofc.github.io."}, status_code=403)
     limited = _rate_limited(_client_ip(request))
     if limited:
         return JSONResponse({"reply": limited, "limited": True}, status_code=429)
