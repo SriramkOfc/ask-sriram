@@ -12,6 +12,8 @@ short_description: AI assistant that answers questions about Sriram Karthikeyan
 
 # Ask Sriram
 
+**Live:** chat with it on [sriramkofc.github.io](https://sriramkofc.github.io) (bottom-right corner), or on [Hugging Face](https://huggingface.co/spaces/sriramkofc/ask-sriram).
+
 An AI assistant that answers questions about my work, skills and projects. It lives on my website as a chat widget ([sriramkofc.github.io](https://sriramkofc.github.io)) and as a standalone page on Hugging Face Spaces.
 
 ## What it does
