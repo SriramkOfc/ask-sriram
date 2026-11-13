@@ -111,9 +111,10 @@ demo = gr.ChatInterface(
         "What has he built recently?",
         "How can I get in touch?",
     ],
+    cache_examples=False,
 )
 
 app = gr.mount_gradio_app(api, demo, path="/")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "7860")))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("GRADIO_SERVER_PORT", "7860")))
