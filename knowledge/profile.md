@@ -43,6 +43,9 @@ AI Engineer with 1.5 years shipping LLM features for a fintech platform used by 
 - Documented best practices for communication tools and supported onboarding of new team members.
 
 ## Projects
+### Fraud Case Board (2026, live demo)
+A case board for fraud analysts with an AI copilot. Cases move through five stages (Alert Triggered, Review, Investigation, Verification, Decision) and carry an alert type (card fraud, account takeover, APP scam, identity fraud, money mule, first-party fraud) and a risk level; the header tracks open exposure. The AI triages, prioritises and drafts notes, but its changes arrive as a proposal that an analyst must approve, and every change, human or AI, is written to an append-only audit trail. Only the last 4 account digits are stored. Built with Next.js, FastAPI, SQLite, OpenRouter (structured outputs) and Docker, tested with pytest, Vitest and Playwright. Started from a project brief in Ed Donner's AI Coder course and extended toward production-grade fraud operations. Live demo: https://fraud-case-board.onrender.com (login user / password, fictional data; the free server can take a minute to wake). Code: https://github.com/SriramkOfc/fraud-case-board
+
 ### Offguard: Agentic Voice AI (2026, independent project)
 An agentic voice assistant that keeps context across a whole call, reasons about the caller's intent and takes actions during the call, going well beyond a scripted IVR. Built in Python with agent tooling.
 
