@@ -14,15 +14,16 @@ EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,255}\.[a-zA-Z]{2,24}$")
 _github_cache: dict = {"at": 0.0, "data": None}
 
 
-def _push(message: str) -> None:
-    """Send a Pushover notification to Sriram. Silently skipped if not configured."""
+def _push(message: str, title: str = "Ask Sriram", priority: int = 0) -> None:
+    """Send a Pushover notification to Sriram. Silently skipped if not configured.
+    priority -1 is a quiet notification: no sound or vibration."""
     token, user = os.getenv("PUSHOVER_TOKEN"), os.getenv("PUSHOVER_USER")
     if os.getenv("DISABLE_PUSH") or not (token and user):
         return
     try:
         requests.post(
             "https://api.pushover.net/1/messages.json",
-            data={"token": token, "user": user, "message": message[:1000], "title": "Ask Sriram"},
+            data={"token": token, "user": user, "message": message[:1000], "title": title, "priority": priority},
             timeout=8,
         )
     except requests.RequestException:

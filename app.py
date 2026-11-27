@@ -8,13 +8,14 @@ Endpoints:
 """
 
 import os
+import re
 import time
 from collections import defaultdict, deque
 
 import gradio as gr
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -22,6 +23,7 @@ from pydantic import BaseModel, Field
 load_dotenv(override=True)
 
 from agent import MAX_INPUT_CHARS, answer  # noqa: E402  (needs env loaded first)
+from tools import _push  # noqa: E402
 
 ALLOWED_ORIGINS = [
     "https://sriramkofc.github.io",
@@ -99,6 +101,57 @@ def chat(body: ChatIn, request: Request):
         print(f"chat error: {type(e).__name__}", flush=True)
         reply = "Sorry, something went wrong on my side. Please try again, or email Sriram at sriramkofc@gmail.com."
     return {"reply": reply}
+
+
+# Visit alerts: a quiet phone notification when a real person opens the website.
+# The site only pings after the page has been visible for a few seconds, skips Sriram's own browsers,
+# and pings at most once per visitor per day. The server adds bot filtering, per-IP dedupe and a daily cap.
+VISIT_DAILY_CAP = int(os.getenv("VISIT_DAILY_CAP", "30"))
+BOT_UA = re.compile(r"bot|crawl|spider|slurp|preview|headless|lighthouse|python|curl|wget|httpclient|facebookexternalhit", re.I)
+_visits: dict = {"date": "", "count": 0, "ips": set()}
+
+
+class VisitIn(BaseModel):
+    path: str = Field(default="/", max_length=200)
+    referrer: str = Field(default="", max_length=500)
+
+
+def _device(ua: str) -> str:
+    os_name = next((n for k, n in [("iPhone", "iPhone"), ("iPad", "iPad"), ("Android", "Android"), ("Mac OS", "Mac"),
+                                   ("Windows", "Windows"), ("Linux", "Linux")] if k in ua), "Unknown device")
+    browser = next((n for k, n in [("Edg/", "Edge"), ("Firefox", "Firefox"), ("CriOS", "Chrome"), ("Chrome", "Chrome"),
+                                   ("Safari", "Safari")] if k in ua), "")
+    return f"{os_name}, {browser}" if browser else os_name
+
+
+def _source(referrer: str) -> str:
+    host = re.sub(r"^https?://(www\.)?", "", referrer).split("/")[0]
+    if not host or host.endswith("sriramkofc.github.io"):
+        return "Direct link or an app (LinkedIn's app often hides this)"
+    return host
+
+
+@api.post("/api/visit", status_code=204)
+def visit(body: VisitIn, request: Request, background: BackgroundTasks):
+    if request.headers.get("origin") != ALLOWED_ORIGINS[0]:
+        return Response(status_code=204)  # only the live site triggers alerts
+    ua = request.headers.get("user-agent", "")
+    if not ua or BOT_UA.search(ua):
+        return Response(status_code=204)
+    today = time.strftime("%Y-%m-%d")
+    if _visits["date"] != today:
+        _visits.update(date=today, count=0, ips=set())
+    ip = _client_ip(request)
+    if ip in _visits["ips"] or _visits["count"] > VISIT_DAILY_CAP:
+        return Response(status_code=204)
+    _visits["ips"].add(ip)
+    _visits["count"] += 1
+    if _visits["count"] > VISIT_DAILY_CAP:
+        message = f"Busy day: over {VISIT_DAILY_CAP} visitors. Visit alerts are paused until tomorrow; GoatCounter has the full numbers."
+    else:
+        message = f"Someone is on your site.\nFrom: {_source(body.referrer)}\nDevice: {_device(ua)}\nPage: {body.path}"
+    background.add_task(_push, message, "Site visitor", -1)
+    return Response(status_code=204)
 
 
 def _gradio_fn(message, history):
