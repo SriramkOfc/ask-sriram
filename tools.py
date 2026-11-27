@@ -15,19 +15,32 @@ _github_cache: dict = {"at": 0.0, "data": None}
 
 
 def _push(message: str, title: str = "Ask Sriram", priority: int = 0) -> None:
-    """Send a Pushover notification to Sriram. Silently skipped if not configured.
-    priority -1 is a quiet notification: no sound or vibration."""
-    token, user = os.getenv("PUSHOVER_TOKEN"), os.getenv("PUSHOVER_USER")
-    if os.getenv("DISABLE_PUSH") or not (token and user):
+    """Notify Sriram's phone. Uses ntfy (free) when NTFY_TOPIC is set, otherwise Pushover.
+    priority -1 is quiet (no sound or vibration), 0 is normal. Skipped if nothing is configured."""
+    if os.getenv("DISABLE_PUSH"):
         return
+    topic = os.getenv("NTFY_TOPIC")
+    token, user = os.getenv("PUSHOVER_TOKEN"), os.getenv("PUSHOVER_USER")
     try:
-        requests.post(
-            "https://api.pushover.net/1/messages.json",
-            data={"token": token, "user": user, "message": message[:1000], "title": title, "priority": priority},
-            timeout=8,
-        )
-    except requests.RequestException:
-        pass
+        if topic:
+            r = requests.post(
+                f"https://ntfy.sh/{topic}",
+                data=message[:1000].encode(),
+                headers={"Title": title, "Priority": "2" if priority < 0 else "3"},
+                timeout=8,
+            )
+        elif token and user:
+            r = requests.post(
+                "https://api.pushover.net/1/messages.json",
+                data={"token": token, "user": user, "message": message[:1000], "title": title, "priority": priority},
+                timeout=8,
+            )
+        else:
+            return
+        if not r.ok:
+            print(f"notify failed: HTTP {r.status_code}", flush=True)
+    except requests.RequestException as e:
+        print(f"notify failed: {type(e).__name__}", flush=True)
 
 
 def get_github_projects() -> dict:

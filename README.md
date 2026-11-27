@@ -18,7 +18,7 @@ An AI assistant that answers questions about my work, skills and projects. It li
 
 ## What it does
 - Answers questions about my experience, skills, projects, education and how to reach me, grounded in a curated knowledge file (`knowledge/profile.md`) built from my resume and LinkedIn.
-- Uses tools: live GitHub projects, contact details, and phone notifications (Pushover) when a visitor leaves their email or asks something it can't answer.
+- Uses tools: live GitHub projects, contact details, and phone notifications (ntfy, free; Pushover as a fallback) when a visitor leaves their email, asks something it can't answer, or when a real person visits the website.
 - Handles tough and adversarial questions: prompt-injection and prompt-leak attempts, impersonation, false premises, salary or personal-info fishing, and off-topic requests.
 
 ## How it's built
